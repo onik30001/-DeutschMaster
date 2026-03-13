@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "UserProgress": {
+      "title": "User Progress",
+      "description": "Tracks user learning progress, XP, and saved items.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "level": { "type": "string", "enum": ["A1", "A2", "B1", "B2", "C1"] },
+        "xp": { "type": "integer" },
+        "streak": { "type": "integer" },
+        "lastActive": { "type": "string", "format": "date-time" },
+        "favorites": { "type": "array", "items": { "type": "string" } },
+        "bookmarks": { "type": "array", "items": { "type": "string" } },
+        "role": { "type": "string", "enum": ["user", "admin"] }
+      },
+      "required": ["uid", "email", "level", "xp", "streak", "role"]
+    },
+    "LevelContent": {
+      "title": "Level Content",
+      "description": "Contains flashcards and quizzes for a specific level.",
+      "type": "object",
+      "properties": {
+        "flashcards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "german": { "type": "string" },
+              "english": { "type": "string" },
+              "example": { "type": "string" },
+              "type": { "type": "string", "enum": ["vocabulary", "grammar"] },
+              "wordType": { "type": "string" },
+              "level": { "type": "string" },
+              "category": { "type": "string" }
+            }
+          }
+        },
+        "quizzes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "question": { "type": "string" },
+              "options": { "type": "array", "items": { "type": "string" } },
+              "correctAnswer": { "type": "string" },
+              "explanation": { "type": "string" },
+              "level": { "type": "string" },
+              "type": { "type": "string", "enum": ["vocabulary", "grammar"] }
+            }
+          }
+        },
+        "grammarRules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "explanation": { "type": "string" },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "german": { "type": "string" },
+                    "english": { "type": "string" }
+                  }
+                }
+              },
+              "level": { "type": "string" },
+              "category": { "type": "string" }
+            }
+          }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProgress",
+      "description": "Individual user progress documents."
+    },
+    "/content/{level}": {
+      "schema": "LevelContent",
+      "description": "Content for each German level (A1-C1)."
+    }
+  }
+}

@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (UID)
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - level: string (A1-C1)
+    //   - xp: number
+    //   - streak: number
+    //   - favorites: list of strings
+    //   - bookmarks: list of strings
+    //   - role: string (user/admin)
+    //
+    // Collection: content
+    // Document ID: level (A1, A2, etc.)
+    // Fields:
+    //   - flashcards: list of objects
+    //   - quizzes: list of objects
+    //   - updatedAt: timestamp
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (
+          request.auth.token.email == "onik30001@gmail.com" ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+        );
+    }
+
+    function isValidUser(data) {
+      let requiredFields = ['uid', 'email', 'level', 'xp', 'streak', 'role', 'lastActive', 'favorites', 'bookmarks', 'createdAt', 'purchasedLevels'];
+      return data.keys().hasAll(requiredFields) &&
+             data.uid is string &&
+             data.email is string &&
+             data.level in ['A1', 'A2', 'B1', 'B2', 'C1'] &&
+             data.xp is number &&
+             data.streak is number &&
+             data.role in ['user', 'admin'] &&
+             data.favorites is list &&
+             data.bookmarks is list &&
+             data.purchasedLevels is list &&
+             (data.lastActive is timestamp || data.lastActive is string) &&
+             (data.createdAt is timestamp || data.createdAt is string);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && (request.auth.uid == userId || request.auth.token.email == "onik30001@gmail.com");
+    }
+
+    match /content/{level} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
